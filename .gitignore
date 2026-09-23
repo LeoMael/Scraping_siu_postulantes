@@ -1,0 +1,30 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environment
+venv/
+.venv/
+
+# Environment Variables & Sensitive Credentials
+.env
+*.env
+auth_session.json
+*.tmp
+
+# Generated Data & Checkpoints
+data/*.csv
+data/*.json
+
+# IDE and Editor configurations
+.vscode/
+.idea/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# OS specific files
+.DS_Store
+Thumbs.db
