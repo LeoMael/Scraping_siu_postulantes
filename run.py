@@ -13,8 +13,12 @@ from pathlib import Path
 # Directorio propio de features/
 FEATURES_DIR = Path(__file__).resolve().parent
 VENV_DIR = FEATURES_DIR / "venv"
-PYTHON_BIN = VENV_DIR / "bin" / "python"
-PIP_BIN = VENV_DIR / "bin" / "pip"
+
+IS_WINDOWS = sys.platform == "win32"
+VENV_BIN_DIR = VENV_DIR / ("Scripts" if IS_WINDOWS else "bin")
+PYTHON_BIN = VENV_BIN_DIR / ("python.exe" if IS_WINDOWS else "python")
+PIP_BIN = VENV_BIN_DIR / ("pip.exe" if IS_WINDOWS else "pip")
+
 MAIN_SCRIPT = FEATURES_DIR / "main.py"
 REQUIREMENTS_FILE = FEATURES_DIR / "requirements.txt"
 
