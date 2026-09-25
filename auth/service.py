@@ -1,3 +1,4 @@
+import sys
 import logging
 from contextlib import contextmanager
 from pathlib import Path
@@ -35,11 +36,13 @@ class AuthService:
 
     def _apply_stealth(self, context: BrowserContext) -> None:
         """Inyecta scripts para eliminar huellas de automatización en Chromium."""
-        context.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-            Object.defineProperty(navigator, 'languages', { get: () => ['es-419', 'es', 'en-US', 'en'] });
-            window.chrome = { runtime: {} };
+        platform = "Win32" if sys.platform == "win32" else "Linux x86_64"
+        context.add_init_script(f"""
+            Object.defineProperty(navigator, 'webdriver', {{ get: () => undefined }});
+            Object.defineProperty(navigator, 'platform', {{ get: () => '{platform}' }});
+            Object.defineProperty(navigator, 'plugins', {{ get: () => [1, 2, 3, 4, 5] }});
+            Object.defineProperty(navigator, 'languages', {{ get: () => ['es-419', 'es', 'en-US', 'en'] }});
+            window.chrome = {{ runtime: {{}} }};
         """)
 
     def create_browser_context(
@@ -72,12 +75,20 @@ class AuthService:
         else:
             browser = playwright.chromium.launch(**launch_kwargs)
 
+        if sys.platform == "win32":
+            user_agent = (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+            )
+        else:
+            user_agent = (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+            )
+
         context_kwargs = {
             "viewport": {"width": 1366, "height": 768},
-            "user_agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            ),
+            "user_agent": user_agent,
             "locale": "es-419",
             "timezone_id": "America/Lima",
         }

@@ -19,7 +19,11 @@ class AuthConfig:
     session_file: Path = (
         (FEATURES_DIR / os.getenv("SESSION_FILE", "auth_session.json"))
         if (FEATURES_DIR / "auth_session.json").exists()
-        else (FEATURES_DIR.parent / os.getenv("SESSION_FILE", "auth_session.json"))
+        else (
+            (FEATURES_DIR.parent / os.getenv("SESSION_FILE", "auth_session.json"))
+            if (FEATURES_DIR.parent / "auth_session.json").exists()
+            else (FEATURES_DIR / os.getenv("SESSION_FILE", "auth_session.json"))
+        )
     )
     headless: bool = os.getenv("HEADLESS", "False").lower() in ("true", "1", "yes")
     browser_channel: str = os.getenv("BROWSER_CHANNEL", "chrome")

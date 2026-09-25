@@ -78,7 +78,28 @@ python run.py --status
 
 ---
 
-## 5. Instalacion Manual del Entorno (Opcional)
+## 5. Primer Inicio de Sesion y reCAPTCHA en Windows
+
+Si ejecutas por primera vez en Windows o en una maquina donde todavia no existe `auth_session.json`, el sistema debe autenticarse en PUNKU:
+
+* **¿Por que ocurre el timeout en reCAPTCHA?**
+  Google reCAPTCHA v2 evalua el navegador. Al ejecutarse en segundo plano (modo oculto o headless), reCAPTCHA abre un desafio visual de seleccion de imagenes (semáforos, pasos peatonales, etc.). Como la ventana no es visible, nadie puede resolverlo y se produce el timeout de 60 segundos.
+
+* **Solucion (Solo la primera vez):**
+  1. Ejecuta el comando con ventana visible en tu pantalla:
+     ```bash
+     python run.py --headed
+     ```
+  2. Las credenciales se rellenan solas. Si Google solicita resolver las imagenes del captcha, resuelvelas directamente en la ventana abierta.
+  3. Una vez ingresado al sistema, se guardara automaticamente el archivo `auth_session.json`.
+  4. A partir de ese momento, **la sesion queda guardada** y podras ejecutar siempre en segundo plano (`python run.py --all`) sin ventanas ni captchas.
+
+* **Alternativa rapida:**
+  Si ya tienes un archivo `auth_session.json` generado en Linux, copialo dentro de la carpeta `features/` en Windows. El sistema lo reutilizara directamente sin pedir login ni captcha.
+
+---
+
+## 6. Instalacion Manual del Entorno (Opcional)
 
 Si prefieres usar `main.py` directamente activando tu propio entorno:
 
@@ -102,7 +123,7 @@ python main.py --all
 
 ---
 
-## 6. Archivos Generados (`features/data/`)
+## 7. Archivos Generados (`features/data/`)
 
 * **`postulantes_listado.csv`**: Tabla maestra con todos los postulantes del sistema.
 * **`postulantes_detalle.csv`**: Datos detallados del modal relacionados por `id_postulante`.

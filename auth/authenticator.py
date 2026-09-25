@@ -70,6 +70,20 @@ class PunkuAuthenticator:
             btn_login.click()
 
         logger.info("Esperando resolución de reCAPTCHA invisible y redirección a SIU...")
+
+        # Detección de desafío visual interactivo de imágenes
+        try:
+            page.wait_for_timeout(1000)
+            bframe = page.locator("iframe[src*='recaptcha/api2/bframe'], iframe[title*='recaptcha']").first
+            if bframe.is_visible(timeout=2500):
+                logger.warning(
+                    "[DESAFÍO CAPTCHA DETECTADO] Google reCAPTCHA solicitó resolver imágenes interactivas.\n"
+                    "  • Si abriste con ventana visible (--headed): resuélvelas en la ventana del navegador.\n"
+                    "  • Si estás en segundo plano (headless): cancela y ejecuta con 'python run.py --headed' para resolverlo una sola vez."
+                )
+        except Exception:
+            pass
+
         try:
             page.wait_for_url(
                 lambda u: "auth1" not in u and "siu.sunedu.gob.pe" in u,
