@@ -164,70 +164,81 @@ class SuneduApiClient:
 
         url = f"{self.DETALLE_URL}/{guid}"
 
-        try:
-            res = self.context.request.get(url, headers=self.headers, timeout=20000)
-            if res.status != 200:
-                logger.warning(f"No se pudo obtener detalle para GUID {guid} (HTTP {res.status})")
-                return None
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                res = self.context.request.get(url, headers=self.headers, timeout=30000)
+                if res.status == 200:
+                    data = res.json()
 
-            data = res.json()
+                    # Datos de colegio (opcional)
+                    nro_doc = str(data.get("numeroDocumento", "")).strip()
+                    colegio_nombre = None
+                    colegio_gestion = None
+                    colegio_egreso = None
 
-            # Datos de colegio (opcional)
-            nro_doc = str(data.get("numeroDocumento", "")).strip()
-            colegio_nombre = None
-            colegio_gestion = None
-            colegio_egreso = None
+                    if consultar_colegio and nro_doc:
+                        colegio_data = self.fetch_datos_colegio(nro_doc)
+                        if colegio_data and isinstance(colegio_data, dict) and "message" not in colegio_data:
+                            colegio_nombre = colegio_data.get("nombreColegio") or colegio_data.get("cenEdu")
+                            colegio_gestion = colegio_data.get("gestion") or colegio_data.get("tipoGestion")
+                            colegio_egreso = str(colegio_data.get("anioEgreso", "")) if colegio_data.get("anioEgreso") else None
 
-            if consultar_colegio and nro_doc:
-                colegio_data = self.fetch_datos_colegio(nro_doc)
-                if colegio_data and isinstance(colegio_data, dict) and "message" not in colegio_data:
-                    colegio_nombre = colegio_data.get("nombreColegio") or colegio_data.get("cenEdu")
-                    colegio_gestion = colegio_data.get("gestion") or colegio_data.get("tipoGestion")
-                    colegio_egreso = str(colegio_data.get("anioEgreso", "")) if colegio_data.get("anioEgreso") else None
+                    es_ing = bool(data.get("esIngresante", False))
+                    discapacidad = bool(data.get("condicionDiscapacidad", False))
+                    solo_un_ape = bool(data.get("soloUnApellido", False))
 
-            es_ing = bool(data.get("esIngresante", False))
-            discapacidad = bool(data.get("condicionDiscapacidad", False))
-            solo_un_ape = bool(data.get("soloUnApellido", False))
+                    return PostulanteDetalleRecord(
+                        id_postulante=id_postulante,
+                        guid=guid,
+                        id_persona=id_persona or int(data.get("idPersona", 0)),
+                        tipo_documento=str(data.get("tipoDocumento", "")),
+                        numero_documento=nro_doc,
+                        nombres=str(data.get("nombres", "")).strip(),
+                        primer_apellido=str(data.get("primerApellido", "")).strip(),
+                        segundo_apellido=str(data.get("segundoApellido", "")).strip(),
+                        solo_un_apellido=solo_un_ape,
+                        sexo=str(data.get("sexo", "")).strip(),
+                        apellido_casada=data.get("apellidoCasada"),
+                        fecha_nacimiento=str(data.get("fechaNacimiento", "")).split("T")[0],
+                        pais_nacimiento=str(data.get("paisNacimiento", "")).strip(),
+                        nacionalidad=str(data.get("nacionalidad", "")).strip(),
+                        ubigeo_nacimiento=str(data.get("textUbigeoNacimiento", "")).strip(),
+                        ubigeo_domicilio=str(data.get("textUbigeoDomicilio", "")).strip(),
+                        celular=str(data.get("celular", "")).strip(),
+                        correo_personal=str(data.get("correoPersonal", "")).strip(),
+                        fecha_postulacion=str(data.get("fechaPostulacion", "")).split("T")[0],
+                        puntaje_obtenido=str(data.get("puntajeObtenido", "")).strip(),
+                        modalidad_ingreso=str(data.get("modalidadIngreso", "")).strip(),
+                        modalidad_estudio=str(data.get("modalidadEstudio", "")).strip(),
+                        es_ingresante=es_ing,
+                        segunda_opcion=str(data.get("textUnidadProgramaSegundaOP", "")).strip(),
+                        tercera_opcion=str(data.get("textUnidadProgramaTerceraOP", "")).strip(),
+                        condicion_discapacidad=discapacidad,
+                        habla_lengua_indigena=str(data.get("idTblHablaLenguaIndigena", "")) if data.get("idTblHablaLenguaIndigena") else None,
+                        lengua_indigena=str(data.get("idLenguaIndigenaOriginaria", "")) if data.get("idLenguaIndigenaOriginaria") else None,
+                        se_siente_parte_de=str(data.get("idTblSeSienteParteDe", "")) if data.get("idTblSeSienteParteDe") else None,
+                        pueblo_indigena=str(data.get("idPuebloIndigenaOriginario", "")) if data.get("idPuebloIndigenaOriginario") else None,
+                        colegio_nombre=colegio_nombre,
+                        colegio_gestion=colegio_gestion,
+                        colegio_anio_egreso=colegio_egreso,
+                    )
+                elif res.status in (401, 403):
+                    logger.warning(f"Sesión expirada (HTTP {res.status}), renovando cabeceras...")
+                    self.initialize_headers()
+                else:
+                    logger.warning(f"Intento {attempt}/{max_retries} no exitoso para GUID {guid} (HTTP {res.status})")
 
-            return PostulanteDetalleRecord(
-                id_postulante=id_postulante,
-                guid=guid,
-                id_persona=id_persona or int(data.get("idPersona", 0)),
-                tipo_documento=str(data.get("tipoDocumento", "")),
-                numero_documento=nro_doc,
-                nombres=str(data.get("nombres", "")).strip(),
-                primer_apellido=str(data.get("primerApellido", "")).strip(),
-                segundo_apellido=str(data.get("segundoApellido", "")).strip(),
-                solo_un_apellido=solo_un_ape,
-                sexo=str(data.get("sexo", "")).strip(),
-                apellido_casada=data.get("apellidoCasada"),
-                fecha_nacimiento=str(data.get("fechaNacimiento", "")).split("T")[0],
-                pais_nacimiento=str(data.get("paisNacimiento", "")).strip(),
-                nacionalidad=str(data.get("nacionalidad", "")).strip(),
-                ubigeo_nacimiento=str(data.get("textUbigeoNacimiento", "")).strip(),
-                ubigeo_domicilio=str(data.get("textUbigeoDomicilio", "")).strip(),
-                celular=str(data.get("celular", "")).strip(),
-                correo_personal=str(data.get("correoPersonal", "")).strip(),
-                fecha_postulacion=str(data.get("fechaPostulacion", "")).split("T")[0],
-                puntaje_obtenido=str(data.get("puntajeObtenido", "")).strip(),
-                modalidad_ingreso=str(data.get("modalidadIngreso", "")).strip(),
-                modalidad_estudio=str(data.get("modalidadEstudio", "")).strip(),
-                es_ingresante=es_ing,
-                segunda_opcion=str(data.get("textUnidadProgramaSegundaOP", "")).strip(),
-                tercera_opcion=str(data.get("textUnidadProgramaTerceraOP", "")).strip(),
-                condicion_discapacidad=discapacidad,
-                habla_lengua_indigena=str(data.get("idTblHablaLenguaIndigena", "")) if data.get("idTblHablaLenguaIndigena") else None,
-                lengua_indigena=str(data.get("idLenguaIndigenaOriginaria", "")) if data.get("idLenguaIndigenaOriginaria") else None,
-                se_siente_parte_de=str(data.get("idTblSeSienteParteDe", "")) if data.get("idTblSeSienteParteDe") else None,
-                pueblo_indigena=str(data.get("idPuebloIndigenaOriginario", "")) if data.get("idPuebloIndigenaOriginario") else None,
-                colegio_nombre=colegio_nombre,
-                colegio_gestion=colegio_gestion,
-                colegio_anio_egreso=colegio_egreso,
-            )
+            except Exception as e:
+                if attempt < max_retries:
+                    logger.warning(f"Reintento {attempt}/{max_retries} para GUID {guid} tras error ({e}). Esperando...")
+                    import time
+                    time.sleep(1.5 * attempt)
+                else:
+                    logger.warning(f"Error definitivo en {guid} tras {max_retries} intentos: {e}. Continuando con el siguiente registro...")
+                    return None
 
-        except Exception as e:
-            logger.warning(f"Error consultando detalle de {guid}: {e}")
-            return None
+        return None
 
     def fetch_datos_colegio(self, numero_documento: str) -> Optional[Dict[str, Any]]:
         """Consulta los datos de colegio por número de documento."""

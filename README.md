@@ -59,7 +59,40 @@ python run.py --status
 
 ---
 
-## 4. Opciones Adicionales
+---
+
+## 4. Cargas Masivas (Postulantes y Matriculados)
+
+Permite consultar el historial de subidas de archivos en SIU SUNEDU y descargar directamente sus archivos Excel físicos divididos en 3 carpetas:
+* **`originales/`**: Archivo Excel subido originalmente.
+* **`validos/`**: Archivo Excel con registros válidos aprobados.
+* **`observados/`**: Archivo Excel con errores u observaciones.
+
+### Comandos de Uso:
+
+```bash
+# 1. Sincronizar el historial de postulantes y matriculados (genera los CSVs):
+python run.py --cargas
+
+# 2. Descargar los archivos Excel (originales, válidos y observados):
+python run.py --excels
+
+# 3. Descargar CSVs y Excels a la vez:
+python run.py --cargas --excels
+
+# 4. Filtrar por tipo específico si solo deseas uno:
+python run.py --cargas --tipo postulantes           # Solo historial CSV de postulantes
+python run.py --cargas --tipo matricula             # Solo historial CSV de matrícula
+python run.py --excels --tipo postulantes           # Solo Excels de postulantes
+python run.py --excels --tipo matricula             # Solo Excels de matrícula
+
+# 5. Descargar solo los Excels con errores/observaciones:
+python run.py --excels --solo-observados
+```
+
+---
+
+## 5. Opciones Adicionales
 
 * **Extraer una cantidad limitada de paginas (ej. 10 paginas = 1000 registros):**
   ```bash
@@ -78,7 +111,7 @@ python run.py --status
 
 ---
 
-## 5. Primer Inicio de Sesion y reCAPTCHA en Windows
+## 6. Primer Inicio de Sesion y reCAPTCHA en Windows
 
 Si ejecutas por primera vez en Windows o en una maquina donde todavia no existe `auth_session.json`, el sistema debe autenticarse en PUNKU:
 
@@ -99,10 +132,11 @@ Si ejecutas por primera vez en Windows o en una maquina donde todavia no existe 
 
 ---
 
-## 6. Instalacion Manual del Entorno (Opcional)
+## 7. Instalacion Manual del Entorno (Opcional)
 
 Si prefieres usar `main.py` directamente activando tu propio entorno:
 
+```bash
 # En Linux / macOS:
 cd features
 python3 -m venv venv
@@ -123,9 +157,16 @@ python main.py --all
 
 ---
 
-## 7. Archivos Generados (`features/data/`)
+## 8. Archivos Generados (`features/data/`)
 
 * **`postulantes_listado.csv`**: Tabla maestra con todos los postulantes del sistema.
 * **`postulantes_detalle.csv`**: Datos detallados del modal relacionados por `id_postulante`.
-* **`checkpoint_listado.json`**: Registro de estado para reanudacion automatica del listado.
-* **`checkpoint_detalle.json`**: Registro de estado para reanudacion automatica de los detalles.
+* **`cargas_masivas/`**:
+  * **`datos_de_postulante/`**:
+    * `historial_cargas.csv`: Historial de cargas de postulantes.
+    * `originales/`, `validos/`, `observados/`: Archivos Excel físicos descargados.
+  * **`datos_de_matricula/`**:
+    * `historial_cargas.csv`: Historial de cargas de matrícula.
+    * `originales/`, `validos/`, `observados/`: Archivos Excel físicos descargados.
+  * `cargas_masivas_consolidado.csv`: Consolidado general.
+

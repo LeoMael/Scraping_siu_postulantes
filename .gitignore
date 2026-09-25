@@ -14,9 +14,13 @@ venv/
 auth_session.json
 *.tmp
 
-# Generated Data & Checkpoints
-data/*.csv
-data/*.json
+# Data files, spreadsheets, exports & checkpoints
+*.csv
+*.xlsx
+*.xls
+*.tsv
+data/**/*
+!data/**/.gitkeep
 
 # IDE and Editor configurations
 .vscode/
